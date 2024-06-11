@@ -31,11 +31,12 @@ const UserSchema = new mongoose.Schema(
         avatar:
         {
             type: String,
-            required: true,
+          required: true,
         },
         coverImage:
         {
-            type: String
+            type: String,
+           
         },
         watchHistory:
             [
@@ -61,14 +62,16 @@ const UserSchema = new mongoose.Schema(
     }
 )
 
-UserSchema.pre("save", async function (next) {
+UserSchema.pre('save', async function (next) {
     try {
+        console.log(this.password)
         if (this.isModified("password")) {
-            this.password = bcrupt.hash(this.password, 10, next());
+            this.password =await bcrupt.hash(this.password, 10);
         }
         else {
             return;
         }
+        console.log("after:",this.password);
         next();
     }
     catch (err) {
@@ -87,8 +90,8 @@ UserSchema.methods.ispasswordCorrect = async function (password) {
 }
 
 UserSchema.methods.generateAccessToken = function () {
-    const token = jwt.sign({
-        _id: this, _id,
+    const token = jwt.sign({ 
+        _id: this. _id,
         email: this.email,
         username: this.username
     }
