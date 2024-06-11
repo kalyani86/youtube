@@ -1,5 +1,5 @@
 import {v2 as cloudinary} from 'cloudinary';
-import fs from "fs";
+import fs, { unlinkSync } from "fs";
 
 
 cloudinary.config({ 
@@ -21,7 +21,8 @@ const uploadOnCloudnary=async (localFilePath)=>{
                 }
             )
 
-            console.log("cloudnary res ",res);
+          //  console.log("cloudnary res ",res);
+            fs.unlinkSync(localFilePath);
             return res;
         
     } 
