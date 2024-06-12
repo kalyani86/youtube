@@ -1,6 +1,7 @@
 import User from '../models/user.model.js';
 import { uploadOnCloudnary } from '../utils/fileupload.js';
 import jwt from 'jsonwebtoken';
+import bcrupt from 'bcrypt'
 
 const registerUser=async(req,res)=>
 {
@@ -103,7 +104,11 @@ const loginUser=async(req,res)=>
             const result=await user.ispasswordCorrect(password);
             console.log(result);
            // result? res.status(200).json({"message":"user login successfully"}):res.status(401).json({"message":"please enter correct password"});
-
+            if(!result)
+                {
+                    res.status(401).json({"message":"please enter correct password"});
+                    return;
+                }
             //generate access and refresh token  
 
             const accessToken=await user.generateAccessToken();
@@ -217,5 +222,93 @@ const refreshAccessToken=async(req,res)=>
         }
     } 
 
+const changePassword=async(req,res)=>
+    {
+       try {
+           console.log("in change password");
+             const {oldPassword,newPassword}=req.body;
+ 
+             const user=await User.findById(req.user?._id);
+             if(!user)
+                 {
+                     res.status(404).json({"message":"user not found"});
+                     return;
+                 }
+            console.log(user);
+             console.log(user.password,oldPassword);
+             const ispassword=await user.ispasswordCorrect(oldPassword);
+             if(!ispassword)
+                 {
+                     res.status(400).json({"message":"password incorrect"});
+                     return;
+                 }
+             
+        //     user.password=newPassword;
+        //    await  user.save({validateBeforeSave:false})
+                await User.findByIdAndUpdate(user._id,
+                    {
+                        $set:
+                        {
+                            password:await bcrupt.hash(newPassword,10)
+                        }
+                    }
+                 )
+             res.status(200).json({"message":"password change successfully"})
+       } catch (error) {
+            console.log("error in change password");
+            res.status(500).json({"message":"Internal server error"});
 
-export { registerUser,loginUser,logout,refreshAccessToken};
+       }
+        
+    }
+
+const getCurrentUser=async(req,res)=>
+    {
+        try{
+            // const user=await User.findById(req.user?._id);
+            res.send(req.user);
+        }catch(err)
+        {
+            console.log("error in gettin new user");
+            res.status(500).json({"message":"Internal server error"});
+        }
+    }
+const updateAvatar=async(req,res)=>
+    {
+        try{
+            console.log(req.file);
+            const newAvatarlocalpath=req.file?.path;
+            if(!newAvatarlocalpath)
+            {
+                res.status(400).json({"message":"Avatar not found"});
+                return;
+            }
+
+            const avatar=await uploadOnCloudnary(newAvatarlocalpath);
+            if(!avatar)
+                {
+                    res.status(400).json({"message":"Error in avatar upload "})
+                    return;
+                }
+            
+            console.log(req.user);
+            console.log("new avatar:",avatar);
+            
+            await User.findByIdAndUpdate(req.user?._id,
+                {
+                    $set:
+                    {
+                        avatar:avatar.url
+                    }
+                }
+            )
+            res.status(200).json({"message":"avatar changed successfully"});
+            
+
+        }catch(err)
+        {
+            console.log("error in updating avatar");
+            res.status(500).json({"message":"Internal server error"});
+        }
+    }
+export { registerUser,loginUser,logout,refreshAccessToken,changePassword,getCurrentUser,updateAvatar};

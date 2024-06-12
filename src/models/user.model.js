@@ -85,7 +85,7 @@ UserSchema.methods.ispasswordCorrect = async function (password) {
         return await bcrupt.compare(password, this.password);
     }
     catch (err) {
-        console.log("error in password check");
+        console.log("error in password check",err);
     }
 }
 
